@@ -934,6 +934,12 @@ app-layer:
       # unsubscribe-topic-match-limit: 100
       # Maximum number of live MQTT transactions per flow
       # max-tx: 4096
+    amqp:
+      enabled: yes
+      # Maximum frame size for AMQP messages
+      # max-frame-size: 1 MiB
+      # Maximum number of live AMQP transactions per flow
+      # max-tx: 4096
     krb5:
       enabled: yes
     bittorrent-dht:

@@ -1,6 +1,7 @@
 ruledir = $(datadir)/suricata/rules
 
 dist_rule_DATA = \
+amqp-events.rules \
 app-layer-events.rules \
 decoder-events.rules \
 dhcp-events.rules \

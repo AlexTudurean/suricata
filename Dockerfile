@@ -1,0 +1,170 @@
+FROM almalinux:9 AS builder
+
+RUN \
+        dnf -y update && \
+        dnf -y install epel-release dnf-plugins-core && \
+        dnf config-manager --set-enabled crb
+
+RUN dnf -y install \
+        autoconf \
+        automake \
+        cargo \
+        cbindgen \
+        diffutils \
+        dpdk-devel \
+        elfutils-libelf-devel \
+        file \
+        file-devel \
+        gcc \
+        gcc-c++ \
+        git \
+        hiredis-devel \
+        jansson-devel \
+        jq \
+        lua-devel \
+        libbpf-devel \
+        libtool \
+        libyaml-devel \
+        libnfnetlink-devel \
+        libnetfilter_queue-devel \
+        libnet-devel \
+        libcap-ng-devel \
+        libevent-devel \
+        libmaxminddb-devel \
+        libpcap-devel \
+        libprelude-devel \
+        libtool \
+        lz4-devel \
+        make \
+        nspr-devel \
+        nss-devel \
+        nss-softokn-devel \
+        numactl-devel \
+        pcre2-devel \
+        pkgconfig \
+        python3-devel \
+        python3-yaml \
+        rust \
+        which \
+        zlib-devel
+
+RUN if [ "$(arch)" = "x86_64" ]; then \
+    dnf -y install hyperscan-devel; \
+fi
+
+WORKDIR /src
+
+# Copy local suricata source with AMQP support instead of downloading
+COPY . /src/suricata-local
+
+WORKDIR /src/suricata-local
+
+# For local builds, we need to handle suricata-update manually
+RUN (cd suricata-update && \
+	curl -L https://github.com/OISF/suricata-update/archive/master.tar.gz | tar zxf - --strip-components=1);
+
+ARG CONFIGURE_ARGS
+
+# Generate autotools files first
+RUN ./autogen.sh
+
+RUN ./configure \
+        --prefix=/usr \
+        --disable-shared \
+        --disable-gccmarch-native \
+        --enable-lua \
+        --enable-nfqueue \
+        --enable-hiredis \
+        --enable-geoip \
+        --enable-ebpf \
+	--enable-dpdk \
+        ${CONFIGURE_ARGS}
+
+ARG CORES=2
+
+RUN make -j "${CORES}"
+
+# Verify Hyperscan support is enabled.
+RUN if [ "$(arch)" = "x86_64" ]; then \
+    ./src/suricata --build-info | grep Hyperscan | grep yes; \
+fi
+
+RUN make install install-conf DESTDIR=/fakeroot
+
+# Something about the Docker mounts won't let us copy /var/run in the
+# next stage.
+RUN rm -rf /fakeroot/var
+
+FROM almalinux/9-base:latest AS runner
+
+RUN \
+        dnf -y update && \
+        dnf -y install epel-release && \
+        dnf -y install \
+        cronie \
+	dpdk \
+        elfutils-libelf \
+        file \
+        findutils \
+        hiredis \
+        iproute \
+        jansson \
+        lua-libs \
+        libbpf \
+        libyaml \
+        libnfnetlink \
+        libnetfilter_queue \
+        libnet \
+        libcap-ng \
+        libevent \
+        libmaxminddb \
+        libpcap \
+        libprelude \
+        logrotate \
+        lz4 \
+        net-tools \
+        nss \
+        nss-softokn \
+        numactl \
+        pcre2 \
+        procps-ng \
+        python3 \
+        python3-pip \
+        python3-yaml \
+        tcpdump \
+        which \
+        zlib && \
+        if [ "$(arch)" = "x86_64" ]; then dnf -y install hyperscan; fi && \
+        dnf clean all && \
+        find /etc/logrotate.d -type f -not -name suricata -delete
+
+COPY --from=builder /fakeroot /
+
+# Create the directories that didn't get copied from the previous stage.
+RUN mkdir -p /var/log/suricata /var/run/suricata /var/lib/suricata
+
+COPY update.yaml /etc/suricata/update.yaml
+COPY suricata.logrotate /etc/logrotate.d/suricata
+
+RUN suricata-update update-sources && \
+        suricata-update enable-source oisf/trafficid && \
+        suricata-update --no-test --no-reload && \
+        /usr/bin/suricata -V
+
+RUN useradd --system --create-home suricata && \
+        chown -R suricata:suricata /etc/suricata && \
+        chown -R suricata:suricata /var/log/suricata && \
+        chown -R suricata:suricata /var/lib/suricata && \
+        chown -R suricata:suricata /var/run/suricata && \
+        cp -a /etc/suricata /etc/suricata.dist && \
+        chmod 600 /etc/logrotate.d/suricata
+
+VOLUME /var/log/suricata
+VOLUME /var/lib/suricata
+VOLUME /var/run/suricata
+VOLUME /etc/suricata
+
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+RUN /usr/bin/suricata --build-info

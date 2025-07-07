@@ -1067,6 +1067,7 @@ static void AppLayerNamesSetup(void)
     AppProtoRegisterProtoString(ALPROTO_LDAP, "ldap");
     AppProtoRegisterProtoString(ALPROTO_DOH2, "doh2");
     AppProtoRegisterProtoString(ALPROTO_MDNS, "mdns");
+    AppProtoRegisterProtoString(ALPROTO_AMQP, "amqp");
     AppProtoRegisterProtoString(ALPROTO_TEMPLATE, "template");
     AppProtoRegisterProtoString(ALPROTO_RDP, "rdp");
     AppProtoRegisterProtoString(ALPROTO_HTTP2, "http2");

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Open Information Security Foundation
+/* Copyright (C) 2025 Open Information Security Foundation
  *
  * You can copy, redistribute or modify this Program under the terms of
  * the GNU General Public License version 2 as published by the Free
@@ -15,19 +15,7 @@
  * 02110-1301, USA.
  */
 
-#ifndef SURICATA_RUST_H
-#define SURICATA_RUST_H
+//! Application layer amqp parser and logger module.
 
-// hack for include orders cf SCSha256
-typedef struct HttpRangeContainerBlock HttpRangeContainerBlock;
-#include "rust-context.h"
-#include "rust-bindings.h"
-
-#define JB_SET_STRING(jb, key, val) SCJbSetFormatted((jb), "\"" key "\":\"" val "\"")
-#define JB_SET_TRUE(jb, key)        SCJbSetFormatted((jb), "\"" key "\":true")
-#define JB_SET_FALSE(jb, key)       SCJbSetFormatted((jb), "\"" key "\":false")
-
-// AMQP parser
-void SCRegisterAMQPParser(void);
-
-#endif /* !SURICATA_RUST_H */
+mod parser;
+pub mod amqp;

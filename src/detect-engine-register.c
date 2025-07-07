@@ -551,7 +551,7 @@ void SigTableSetup(void)
     DetectHttpRequestHeaderRegister();
     DetectHttpResponseHeaderRegister();
     DetectHttpHeaderNamesRegister();
-    DetectHttpHeadersRegister();
+    // DetectHttpHeadersRegister();
     DetectHttpProtocolRegister();
     DetectHttpStartRegister();
     DetectHttpRawHeaderRegister();
