@@ -1,0 +1,11 @@
+# AMQP app layer event rules
+#
+# SID's fall in the 2280001+ range. See https://suricata.readthedocs.io/en/latest/rules/app-layer.html
+#
+# These sids are in use:
+# 2280001 - 2280010
+
+alert amqp any any -> any any (msg:"SURICATA AMQP too many transactions"; flow:established; app-layer-event:amqp.too_many_transactions; classtype:protocol-command-decode; sid:2280001; rev:1;)
+alert amqp any any -> any any (msg:"SURICATA AMQP invalid frame"; flow:established; app-layer-event:amqp.invalid_frame; classtype:protocol-command-decode; sid:2280002; rev:1;)
+alert amqp any any -> any any (msg:"SURICATA AMQP protocol version mismatch"; flow:established; app-layer-event:amqp.protocol_version_mismatch; classtype:protocol-command-decode; sid:2280003; rev:1;)
+alert amqp any any -> any any (msg:"SURICATA AMQP invalid method"; flow:established; app-layer-event:amqp.invalid_method; classtype:protocol-command-decode; sid:2280004; rev:1;)
