@@ -29,5 +29,6 @@ typedef struct HttpRangeContainerBlock HttpRangeContainerBlock;
 
 // AMQP parser
 void SCRegisterAMQPParser(void);
+void SCDetectAMQPRegister(void);
 
 #endif /* !SURICATA_RUST_H */

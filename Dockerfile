@@ -22,6 +22,7 @@ RUN dnf -y install \
         jansson-devel \
         jq \
         lua-devel \
+        luajit-devel \
         libbpf-devel \
         libtool \
         libyaml-devel \
@@ -73,6 +74,9 @@ RUN ./configure \
         --disable-shared \
         --disable-gccmarch-native \
         --enable-lua \
+        --enable-luajit \
+	--with-luajit-includes=/usr/include/luajit-2.1 \
+	--with-luajit-libraries=/usr/lib64 \
         --enable-nfqueue \
         --enable-hiredis \
         --enable-geoip \

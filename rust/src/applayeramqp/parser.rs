@@ -83,12 +83,30 @@ pub fn probe_amqp(input: &[u8]) -> IResult<&[u8], ()> {
         return Ok((&input[8..], ()));
     }
     
-    // Check for valid frame type (1=method, 2=header, 3=body, 8=heartbeat)
-    let frame_type = input[0];
-    if matches!(frame_type, 1 | 2 | 3 | 8) {
-        // Additional validation: check if we have enough bytes for frame header
-        if input.len() >= 7 {
-            return Ok((&input[1..], ()));
+    // Check for valid AMQP frame structure
+    if input.len() >= 7 {
+        let frame_type = input[0];
+        // Check for valid frame type (1=method, 2=header, 3=body, 8=heartbeat)
+        if matches!(frame_type, 1 | 2 | 3 | 8) {
+            let length = u32::from_be_bytes([input[3], input[4], input[5], input[6]]);
+            
+            // Validate frame length is reasonable (not too large, not zero for non-heartbeat)
+            if length <= 1048576 && (frame_type == 8 || length > 0) {
+                // For method frames, do additional validation on class IDs if we have enough data
+                if frame_type == 1 && input.len() >= 11 && length >= 4 {
+                    let class_id = u16::from_be_bytes([input[7], input[8]]);
+                    // Check for known AMQP class IDs (10=connection, 20=channel, 40=exchange, 50=queue, 60=basic)
+                    if matches!(class_id, 10 | 20 | 40 | 50 | 60) {
+                        return Ok((&input[1..], ()));
+                    }
+                }
+                
+                // For non-method frames or if method frame validation fails,
+                // still accept if frame structure looks valid
+                if length > 0 && length < 65536 {
+                    return Ok((&input[1..], ()));
+                }
+            }
         }
     }
     

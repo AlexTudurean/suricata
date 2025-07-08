@@ -19,3 +19,4 @@
 
 mod parser;
 pub mod amqp;
+pub mod detect;

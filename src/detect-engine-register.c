@@ -767,6 +767,7 @@ void SigTableSetup(void)
     SCDetectWebsocketRegister();
     SCDetectEnipRegister();
     SCDetectMqttRegister();
+    SCDetectAMQPRegister();
     SCDetectRfbRegister();
     SCDetectSipRegister();
     SCDetectTemplateRegister();
